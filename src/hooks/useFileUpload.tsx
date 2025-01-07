@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import imageCompression from "browser-image-compression";
 import { t } from "i18next";
+import jsPDF from "jspdf";
 import {
   ChangeEvent,
   DetailedHTMLProps,
@@ -97,6 +98,33 @@ export default function useFileUpload(
   const [files, setFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
 
+  const generatePDF = async (files: File[]): Promise<File | null> => {
+    try {
+      const pdf = new jsPDF();
+      for (const [index, file] of files.entries()) {
+        const imgData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject("Error reading file");
+          reader.readAsDataURL(file);
+        });
+
+        pdf.addImage(imgData, "JPEG", 10, 10, 190, 0);
+        if (index < files.length - 1) pdf.addPage();
+      }
+
+      const pdfBlob = pdf.output("blob");
+      const pdfFile = new File([pdfBlob], "combined.pdf", {
+        type: "application/pdf",
+      });
+
+      console.log("Generated PDF file:", pdfFile); // Log the generated file
+      return pdfFile;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      return null;
+    }
+  };
   const onFileChange = (e: ChangeEvent<HTMLInputElement>): any => {
     if (!e.target.files?.length) {
       return;
@@ -238,8 +266,19 @@ export default function useFileUpload(
     if (!validateFileUpload()) return;
 
     setProgress(0);
+    let filesToUpload = files;
 
-    for (const [index, file] of files.entries()) {
+    if (files.length > 1) {
+      const pdfFile = await generatePDF(files);
+      if (pdfFile) {
+        filesToUpload = [pdfFile];
+      } else {
+        console.error("Failed to generate PDF from multiple files.");
+        return;
+      }
+    }
+
+    for (const [index, file] of filesToUpload.entries()) {
       const filename =
         allowNameFallback && uploadFileNames[index] === "" && file
           ? file.name
