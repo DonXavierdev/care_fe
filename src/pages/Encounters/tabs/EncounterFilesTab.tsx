@@ -136,6 +136,7 @@ export const EncounterFilesTab = (props: EncounterTabProps) => {
     ],
     allowNameFallback: false,
     onUpload: () => refetch(),
+    multiple: true,
   });
 
   useEffect(() => {
@@ -543,8 +544,12 @@ const FileUploadDialog = ({
         </DialogHeader>
         <div className="mb-1 flex items-center justify-between gap-2 rounded-md bg-secondary-300 px-4 py-2">
           <span>
-            <CareIcon icon="l-paperclip" className="mr-2" />
-            {fileUpload.files?.[0]?.name}
+            {fileUpload.files?.map((file, index) => (
+              <div key={index} className="flex items-center mb-2">
+                <CareIcon icon="l-paperclip" className="mr-2" />
+                {file.name}
+              </div>
+            ))}
           </span>
         </div>
         <TextFormField
