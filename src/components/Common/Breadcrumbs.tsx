@@ -1,5 +1,6 @@
 import { Link, usePath } from "raviger";
 import { useState } from "react";
+import { useEffect } from "react";
 
 import CareIcon from "@/CAREUI/icons/CareIcon";
 
@@ -19,6 +20,8 @@ import {
 
 import useAppHistory from "@/hooks/useAppHistory";
 
+import routes from "@/Utils/request/api";
+import request from "@/Utils/request/request";
 import { classNames } from "@/Utils/utils";
 
 const MENU_TAGS: { [key: string]: string } = {
@@ -59,19 +62,112 @@ export default function Breadcrumbs({
   const path = usePath();
   const [showFullPath, setShowFullPath] = useState(false);
 
+  const fetchFacilityName = async (id: string) => {
+    try {
+      const response = await request(routes.getAnyFacility, {
+        pathParams: { id },
+      });
+      return response.data?.name || id;
+    } catch (error) {
+      console.error("Error fetching facility name:", error);
+      return "Error fetching facility";
+    }
+  };
+
+  const fetchPatientName = async (id: string) => {
+    try {
+      const response = await request(routes.getPatient, { pathParams: { id } });
+      return response.data?.name || id;
+    } catch (error) {
+      console.error("Error fetching patient name:", error);
+      return "Error fetching patient";
+    }
+  };
+
+  const fetchEncounterName = async (id: string) => {
+    try {
+      const response = await request(routes.encounter.get, {
+        pathParams: { id },
+      });
+      return "Encounter on " + response.data?.period.start || id;
+    } catch (error) {
+      console.error("Error fetching encounter name:", error);
+      return "Error fetching encounter";
+    }
+  };
+
+  const idQueries = path
+    ?.slice(1)
+    .split("/")
+    .map((field, i, arr) => {
+      const isId = /^[0-9a-fA-F-]{36}$/.test(field);
+      const prevBreadcrumb = arr[i - 1];
+
+      if (isId) {
+        if (prevBreadcrumb === "facility") {
+          return { id: field, type: "facility" };
+        } else if (prevBreadcrumb === "patient") {
+          return { id: field, type: "patient" };
+        } else if (prevBreadcrumb === "encounter") {
+          return { id: field, type: "encounter" };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+  const fetchNames = async () => {
+    const results: Record<string, string> = {};
+
+    for (const query of idQueries || []) {
+      let name = "";
+      if (query?.type === "facility") {
+        name = await fetchFacilityName(query.id);
+      } else if (query?.type === "patient") {
+        name = await fetchPatientName(query.id);
+      } else if (query?.type === "encounter") {
+        name = await fetchEncounterName(query.id);
+      }
+      if (query) {
+        results[query.id] = name;
+      }
+    }
+
+    return results;
+  };
+
+  const [names, setNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const getNames = async () => {
+      const fetchedNames = await fetchNames();
+      setNames(fetchedNames);
+    };
+
+    getNames();
+  }, [path]);
+
   const crumbs = path
     ?.slice(1)
     .split("/")
-    .map((field, i) => ({
-      name: replacements[field]?.name || MENU_TAGS[field] || capitalize(field),
-      uri:
-        replacements[field]?.uri ||
-        path
-          .split("/")
-          .slice(0, i + 2)
-          .join("/"),
-      style: replacements[field]?.style || "",
-    }));
+    .map((field, i) => {
+      const isId = /^[0-9a-fA-F-]{36}$/.test(field);
+
+      return {
+        name:
+          replacements[field]?.name ||
+          (isId
+            ? names[field] || "Loading..."
+            : MENU_TAGS[field] || capitalize(field)),
+        uri:
+          replacements[field]?.uri ||
+          path
+            .split("/")
+            .slice(0, i + 2)
+            .join("/"),
+        style: replacements[field]?.style || "",
+      };
+    });
 
   const renderCrumb = (crumb: any, index: number) => {
     const isLastItem = index === crumbs!.length - 1;
