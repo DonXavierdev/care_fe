@@ -1,20 +1,33 @@
 import fs from "fs";
 import fetch from "node-fetch";
 
-const fetchSBOMData = async (url) => {
+interface SBOMData {
+  dependencies?: Record<string, unknown>;
+  [key: string]: unknown; // Add more specific fields if known
+}
+
+interface FetchError extends Error {
+  response?: Response;
+}
+
+const fetchSBOMData = async (url: string): Promise<SBOMData> => {
   const response = await fetch(url, {
     headers: {
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
     },
   });
+
   if (!response.ok) {
-    throw new Error(`Error fetching SBOM data from ${url}`);
+    const error: FetchError = new Error(`Error fetching SBOM data from ${url}`);
+    error.response = response;
+    throw error;
   }
-  return await response.json();
+
+  return (await response.json()) as SBOMData;
 };
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   const feUrl =
     "https://api.github.com/repos/ohcnetwork/care_fe/dependency-graph/sbom";
   const beUrl =
@@ -28,21 +41,21 @@ const fetchData = async () => {
 
     // Write frontend SBOM data
     fs.writeFileSync(
-      "./src/components/Licenses/feBomData.json",
+      "./public/licenses/feBomData.json",
       JSON.stringify(frontendData, null, 2),
     );
 
     // Write backend SBOM data
     fs.writeFileSync(
-      "./src/components/Licenses/beBomData.json",
+      "./public/licenses/beBomData.json",
       JSON.stringify(backendData, null, 2),
     );
-
-    console.log(
-      "SBOM data successfully saved as feBomData.json and beBomData.json",
-    );
   } catch (error) {
-    console.error("Error fetching SBOM data:", error.message);
+    if (error instanceof Error) {
+      console.error("Error fetching SBOM data:", error.message);
+    } else {
+      console.error("Unknown error occurred while fetching SBOM data");
+    }
   }
 };
 
