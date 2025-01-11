@@ -6,13 +6,10 @@ import ResetPassword from "@/components/Auth/ResetPassword";
 import InvalidReset from "@/components/ErrorPages/InvalidReset";
 import SessionExpired from "@/components/ErrorPages/SessionExpired";
 
-import { PatientRegistration } from "@/pages/Appoinments/PatientRegistration";
-import PatientSelect from "@/pages/Appoinments/PatientSelect";
-import { ScheduleAppointment } from "@/pages/Appoinments/Schedule";
-import PatientLogin from "@/pages/Appoinments/auth/PatientLogin";
 import { FacilitiesPage } from "@/pages/Facility/FacilitiesPage";
 import { FacilityDetailsPage } from "@/pages/Facility/FacilityDetailsPage";
 import { LandingPage } from "@/pages/Landing/LandingPage";
+import PatientLogin from "@/pages/PublicAppointments/auth/PatientLogin";
 
 const LicensesPage = lazy(() => import("@/components/Licenses/LicensesPage"));
 
@@ -29,27 +26,6 @@ export const routes = {
     staffId: string;
     page: string;
   }) => <PatientLogin facilityId={facilityId} staffId={staffId} page={page} />,
-  "/facility/:facilityId/appointments/:staffId/book-appointment": ({
-    facilityId,
-    staffId,
-  }: {
-    facilityId: string;
-    staffId: string;
-  }) => <ScheduleAppointment facilityId={facilityId} staffId={staffId} />,
-  "/facility/:facilityId/appointments/:staffId/patient-select": ({
-    facilityId,
-    staffId,
-  }: {
-    facilityId: string;
-    staffId: string;
-  }) => <PatientSelect facilityId={facilityId} staffId={staffId} />,
-  "/facility/:facilityId/appointments/:staffId/patient-registration": ({
-    facilityId,
-    staffId,
-  }: {
-    facilityId: string;
-    staffId: string;
-  }) => <PatientRegistration facilityId={facilityId} staffId={staffId} />,
   "/login": () => <Login />,
   "/forgot-password": () => <Login forgot={true} />,
   "/password_reset/:token": ({ token }: { token: string }) => (

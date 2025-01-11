@@ -3,7 +3,7 @@ import CareIcon from "@/CAREUI/icons/CareIcon";
 import { Button } from "@/components/ui/button";
 
 import { QuestionLabel } from "@/components/Questionnaire/QuestionLabel";
-import { FollowUpAppointmentQuestion } from "@/components/Questionnaire/QuestionTypes/FollowUpAppointmentQuestion";
+import { AppointmentQuestion } from "@/components/Questionnaire/QuestionTypes/AppointmentQuestion";
 
 import { QuestionValidationError } from "@/types/questionnaire/batch";
 import type {
@@ -36,6 +36,7 @@ interface QuestionInputProps {
   clearError: () => void;
   disabled?: boolean;
   facilityId: string;
+  patientId: string;
 }
 
 export function QuestionInput({
@@ -47,6 +48,7 @@ export function QuestionInput({
   clearError,
   disabled,
   facilityId,
+  patientId,
 }: QuestionInputProps) {
   const questionnaireResponse = questionnaireResponses.find(
     (v) => v.question_id === question.id,
@@ -83,6 +85,7 @@ export function QuestionInput({
       withLabel: false,
       clearError,
       index,
+      patientId,
     };
 
     switch (question.type) {
@@ -115,8 +118,8 @@ export function QuestionInput({
             return <SymptomQuestion {...commonProps} />;
           case "diagnosis":
             return <DiagnosisQuestion {...commonProps} />;
-          case "follow_up_appointment":
-            return <FollowUpAppointmentQuestion {...commonProps} />;
+          case "appointment":
+            return <AppointmentQuestion {...commonProps} />;
           case "encounter":
             if (encounterId) {
               return (
@@ -162,7 +165,7 @@ export function QuestionInput({
 
           return (
             <div key={index} className="mt-2 gap-2 flex items-end">
-              <div className="flex-1 space-y-1">
+              <div className="flex-1 space-y-1" data-question-id={question.id}>
                 {index === 0 && <QuestionLabel question={question} />}
                 {renderSingleInput(index)}
               </div>

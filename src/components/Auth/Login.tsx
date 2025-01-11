@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/input-password";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -28,10 +29,7 @@ import BrowserWarning from "@/components/ErrorPages/BrowserWarning";
 
 import { useAuthContext } from "@/hooks/useAuthUser";
 
-import { LocalStorageKeys } from "@/common/constants";
-
 import FiltersCache from "@/Utils/FiltersCache";
-import * as Notification from "@/Utils/Notifications";
 import routes from "@/Utils/request/api";
 import mutate from "@/Utils/request/mutate";
 import request from "@/Utils/request/request";
@@ -152,11 +150,7 @@ const Login = (props: LoginProps) => {
           phoneNumber: `+91${phone}`,
           createdAt: new Date().toISOString(),
         };
-        localStorage.setItem(
-          LocalStorageKeys.patientTokenKey,
-          JSON.stringify(tokenData),
-        );
-        patientLogin();
+        patientLogin(tokenData, `/patient/home`);
       }
     },
     onError: (error: any) => {
@@ -176,7 +170,7 @@ const Login = (props: LoginProps) => {
         errorMessage = error.message;
       }
       setOtpValidationError(errorMessage);
-      Notification.Error({ msg: errorMessage });
+      toast.error(errorMessage);
     },
   });
 
@@ -522,10 +516,9 @@ const Login = (props: LoginProps) => {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="password">Password</Label>
-                          <Input
+                          <PasswordInput
                             id="password"
                             name="password"
-                            type="password"
                             data-cy="password"
                             value={form.password}
                             onChange={handleChange}
