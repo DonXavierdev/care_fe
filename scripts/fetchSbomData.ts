@@ -1,16 +1,46 @@
 import fs from "fs";
 import fetch from "node-fetch";
 
-interface SBOMData {
-  dependencies?: Record<string, unknown>;
-  [key: string]: unknown; // Add more specific fields if known
+const FE_SBOM_URL =
+  "https://api.github.com/repos/ohcnetwork/care_fe/dependency-graph/sbom";
+const BE_SBOM_URL =
+  "https://api.github.com/repos/ohcnetwork/care/dependency-graph/sbom";
+
+interface GitHubSbomApiResponse {
+  sbom: {
+    spdxVersion: string;
+    dataLicense: string;
+    SPDXID: string;
+    name: string;
+    documentNamespace: string;
+    creationInfo: {
+      creators: string[];
+      created: string;
+    };
+    packages: {
+      name: string;
+      SPDXID: string;
+      versionInfo: string;
+      downloadLocation: string;
+      filesAnalyzed: boolean;
+      licenseConcluded?: string;
+      copyrightText?: string;
+      externalRefs: {
+        referenceCategory: string;
+        referenceType: string;
+        referenceLocator: string;
+      }[];
+      licenseDeclared?: string;
+    }[];
+    relationships: {
+      spdxElementId: string;
+      relatedSpdxElement: string;
+      relationshipType: string;
+    }[];
+  };
 }
 
-interface FetchError extends Error {
-  response?: Response;
-}
-
-const fetchSBOMData = async (url: string): Promise<SBOMData> => {
+const fetchSBOMData = async (url: string): Promise<GitHubSbomApiResponse> => {
   const response = await fetch(url, {
     headers: {
       Accept: "application/vnd.github+json",
@@ -19,44 +49,29 @@ const fetchSBOMData = async (url: string): Promise<SBOMData> => {
   });
 
   if (!response.ok) {
-    const error: FetchError = new Error(`Error fetching SBOM data from ${url}`);
-    error.response = response;
-    throw error;
+    throw new Error(
+      `Error fetching SBOM data from ${url}: ${response.statusText}`,
+    );
   }
 
-  return (await response.json()) as SBOMData;
+  return (await response.json()) as GitHubSbomApiResponse;
 };
 
 const fetchData = async (): Promise<void> => {
-  const feUrl =
-    "https://api.github.com/repos/ohcnetwork/care_fe/dependency-graph/sbom";
-  const beUrl =
-    "https://api.github.com/repos/ohcnetwork/care/dependency-graph/sbom";
+  const [frontendData, backendData] = await Promise.all([
+    fetchSBOMData(FE_SBOM_URL),
+    fetchSBOMData(BE_SBOM_URL),
+  ]);
 
-  try {
-    const [frontendData, backendData] = await Promise.all([
-      fetchSBOMData(feUrl),
-      fetchSBOMData(beUrl),
-    ]);
+  fs.writeFileSync(
+    "./public/licenses/feBomData.json",
+    JSON.stringify(frontendData, null, 2),
+  );
 
-    // Write frontend SBOM data
-    fs.writeFileSync(
-      "./public/licenses/feBomData.json",
-      JSON.stringify(frontendData, null, 2),
-    );
-
-    // Write backend SBOM data
-    fs.writeFileSync(
-      "./public/licenses/beBomData.json",
-      JSON.stringify(backendData, null, 2),
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("Error fetching SBOM data:", error.message);
-    } else {
-      console.error("Unknown error occurred while fetching SBOM data");
-    }
-  }
+  fs.writeFileSync(
+    "./public/licenses/beBomData.json",
+    JSON.stringify(backendData, null, 2),
+  );
 };
 
 fetchData();
