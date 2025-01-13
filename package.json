@@ -166,7 +166,6 @@
     "lint-staged": "^15.2.10",
     "local-cypress": "^1.2.6",
     "marked": "^14.1.4",
-    "node-fetch": "^3.3.2",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",

@@ -1,5 +1,4 @@
 import fs from "fs/promises";
-import fetch from "node-fetch";
 
 const FE_SBOM_URL =
   "https://api.github.com/repos/ohcnetwork/care_fe/dependency-graph/sbom";
