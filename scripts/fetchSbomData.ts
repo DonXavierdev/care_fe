@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import fetch from "node-fetch";
 
 const FE_SBOM_URL =
@@ -6,7 +6,7 @@ const FE_SBOM_URL =
 const BE_SBOM_URL =
   "https://api.github.com/repos/ohcnetwork/care/dependency-graph/sbom";
 
-interface GitHubSbomApiResponse {
+export interface GitHubSbomApiResponse {
   sbom: {
     spdxVersion: string;
     dataLicense: string;
@@ -58,18 +58,22 @@ const fetchSBOMData = async (url: string): Promise<GitHubSbomApiResponse> => {
 };
 
 const fetchData = async (): Promise<void> => {
+  const licensesFolderPath = "./public/licenses";
+
+  await fs.mkdir(licensesFolderPath, { recursive: true });
+
   const [frontendData, backendData] = await Promise.all([
     fetchSBOMData(FE_SBOM_URL),
     fetchSBOMData(BE_SBOM_URL),
   ]);
 
-  fs.writeFileSync(
-    "./public/licenses/feBomData.json",
+  await fs.writeFile(
+    `${licensesFolderPath}/feBomData.json`,
     JSON.stringify(frontendData, null, 2),
   );
 
-  fs.writeFileSync(
-    "./public/licenses/beBomData.json",
+  await fs.writeFile(
+    `${licensesFolderPath}/beBomData.json`,
     JSON.stringify(backendData, null, 2),
   );
 };

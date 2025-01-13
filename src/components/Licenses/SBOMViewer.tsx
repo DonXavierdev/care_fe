@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import React, { useState } from "react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useTranslation } from "react-i18next";
+import { GitHubSbomApiResponse } from "scripts/fetchSbomData";
 
 import Card from "@/CAREUI/display/Card";
 import CareIcon from "@/CAREUI/icons/CareIcon";
@@ -30,7 +31,7 @@ const BOMDisplay: React.FC = () => {
     data: feBomData,
     isLoading: feBomLoading,
     error: feBomError,
-  } = useQuery({
+  } = useQuery<GitHubSbomApiResponse>({
     queryKey: ["feBomData"],
     queryFn: () => fetchJsonData("/licenses/feBomData.json"),
   });
@@ -39,7 +40,7 @@ const BOMDisplay: React.FC = () => {
     data: beBomData,
     isLoading: beBomLoading,
     error: beBomError,
-  } = useQuery({
+  } = useQuery<GitHubSbomApiResponse>({
     queryKey: ["beBomData"],
     queryFn: () => fetchJsonData("/licenses/beBomData.json"),
   });
@@ -99,7 +100,7 @@ const BOMDisplay: React.FC = () => {
             {t("packages")}
             {":"}
           </h3>
-          {packages.map((pkg: any, index: number) => (
+          {packages.map((pkg, index) => (
             <div
               key={index}
               className="block rounded-md border p-2 transition-all duration-300 hover:shadow-lg"
@@ -140,7 +141,7 @@ const BOMDisplay: React.FC = () => {
                 </h4>
                 {showExternalRefs === index && (
                   <ul className="list-inside list-disc pl-4 text-xs">
-                    {pkg.externalRefs?.map((ref: any, idx: any) => (
+                    {pkg.externalRefs?.map((ref, idx) => (
                       <li key={idx}>
                         <a
                           href={ref.referenceLocator || "#"}
